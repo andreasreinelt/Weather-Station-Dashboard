@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 
-import LoginButton from './LoginButton';
+import LoginButton from './Login';
 import Callback from './Callback';
-import WeatherDashboard from './WeatherDashboard';
+import Dashboard from './Dashboard';
 
 function App() {
   const [tokenData, setTokenData] = useState(() => {
@@ -36,7 +36,7 @@ function App() {
         window.location.href = '/';
         return null;
       }
-      return <WeatherDashboard tokenData={tokenData} />;
+      return <Dashboard tokenData={tokenData} />;
     }
 
     // default route to root

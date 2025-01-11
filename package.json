@@ -1,6 +1,6 @@
 {
   "name": "weather-station-dashboard",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A React-based dashboard for displaying data from a Netatmo smart weather station",
   "author": "Andreas Reinelt",
   "private": true,

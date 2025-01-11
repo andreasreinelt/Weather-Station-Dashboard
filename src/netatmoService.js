@@ -1,11 +1,7 @@
 import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from './config.js';
+import * as helpers from './helpers.js';
 
-function prettifyDate(date) {
-  const timestamp = date ? new Date(date) : new Date();
-  return timestamp.toLocaleTimeString('de-DE', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-// exchange authorization code for an access token
+// Exchange authorization code for an access token
 export async function exchangeCodeForToken(code) {
   const response = await fetch('https://api.netatmo.com/oauth2/token', {
     method: 'POST',
@@ -27,6 +23,7 @@ export async function exchangeCodeForToken(code) {
 
   const data = await response.json();
   console.log('Token data after exchange:', data);
+
   return {
     ...data,
     expiryTime: Date.now() + data.expires_in * 1000, // calculate token expiry time
@@ -35,6 +32,8 @@ export async function exchangeCodeForToken(code) {
 
 // refresh the access token using the refresh token
 export async function refreshAccessToken(refreshToken) {
+  console.log('Attempting to refresh token with refresh_token:', refreshToken);
+
   const response = await fetch('https://api.netatmo.com/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded', },
@@ -46,18 +45,40 @@ export async function refreshAccessToken(refreshToken) {
     }),
   });
 
+  const errorDetails = await response.clone().text();
+
   if (!response.ok) {
-    const errorDetails = await response.text();
     console.error('Error during token refresh:', errorDetails);
+
+    // if refresh token is to old, redirect to login page
+    if (errorDetails.includes('invalid_grant')) {
+      console.error('refresh_token is invalid. redirecting to login page...');
+      localStorage.removeItem('tokenData'); // remove invalid token
+      window.location.href = '/login'; // redirect to login
+      return;
+    }
+
     throw new Error('Error during token refresh');
   }
 
   const data = await response.json();
   console.log('Token data after refresh:', data);
-  return {
+
+  // check if refresh_token changed
+  if (data.refresh_token && data.refresh_token !== refreshToken) {
+    console.log('Netatmo returned a new refresh token:', data.refresh_token);
+  } else {
+    console.log('Netatmo returned the same refresh token.');
+  }
+
+  const updatedTokenData = {
     ...data,
     expiryTime: Date.now() + data.expires_in * 1000, // update expiry time
   };
+
+  // save updated token data
+  localStorage.setItem('tokenData', JSON.stringify(updatedTokenData));
+  return updatedTokenData;
 }
 
 // ensure the token is valid and refresh if needed
@@ -68,34 +89,23 @@ export async function refreshAccessTokenIfNeeded(tokenData) {
 
   const { refresh_token, expiryTime } = tokenData;
 
-  console.log('Current token expiry time:', prettifyDate(expiryTime), 'Current time:', prettifyDate(Date.now()));
+  console.log('refresh_token expiry time:', helpers.prettifyDate(expiryTime, true, true), 'and current time:', helpers.prettifyDate(Date.now(), true, true));
 
-  if (Date.now() < expiryTime) {
+  // check if token is still valid
+  if (Date.now() < expiryTime - 2 * 60 * 60 * 1000) {
     console.log('Token is still valid');
     return tokenData;
   }
 
   console.log('Access token expired, refreshing...');
-  try {
-    const refreshedData = await refreshAccessToken(refresh_token);
-    console.log('Refreshed token data:', refreshedData);
-
-    return {
-      ...refreshedData,
-      expiryTime: Date.now() + (refreshedData.expires_in * 1000),
-    };
-  } catch (error) {
-    if (error.message.includes('invalid_grant')) {
-      console.error('Refresh token is invalid. User must log in again');
-      throw new Error('Refresh token is invalid. User must log in again');
-    }
-    throw error;
-  }
+  const refreshedData = await refreshAccessToken(refresh_token);
+  return refreshedData;
 }
 
 // fetch station data from the Netatmo weather station
 export async function getStationData(tokenData) {
   const validTokenData = await refreshAccessTokenIfNeeded(tokenData);
+
   const response = await fetch('https://api.netatmo.com/api/getstationsdata', {
     method: 'GET',
     headers: {

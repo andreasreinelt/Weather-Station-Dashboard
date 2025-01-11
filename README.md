@@ -3,7 +3,7 @@
 This is my Senior Solo project at Codeworks.
 It is a React-based dashboard website to display the temperature, humidity and other values of a Netatmo smart weather station
 
-<span style="color:red">Everything is not finished and not ready to be used</span>
+**⚠️ Everything is not finished and not ready to be used ⚠️**
 
 ## Configuration
 
@@ -12,12 +12,22 @@ It is a React-based dashboard website to display the temperature, humidity and o
 * Install dependencies with npm install
 * Start the development server with npm run dev
 
-## To Do
-* Display more Data and more devices (and make it prittier):
-  * Humidity / CO2 / Air Pressure
-* Maybe give the possibility to display mock Data for users to try without an account
+## Made with
+* Vite and React
+* Google Search and a little bit create-react-app in the beginning
+* Netatmo API https://dev.netatmo.com/apidocumentation/general
+* Code I created while doing the BootCamp
 
 ## Changelog
+
+### v0.3.0 - 11.01.25
+* New Features:
+  * Design is much improved: Shows now data with the current time, time is updating every minute, data every 10 minutes
+  * Changed and optimized some file names and handeling - should be now much clearer what's going on in each file
+  * Still trying to optimize the token refresh - so far everything works, but after 3 hours it could get problematic fetching a new token to still get acess. It also takes 3 hours every time to wait to fix bugs with this...
+* Known Bugs:
+  * Trend looks inconsistent, but CSS is tricky with this one
+  ![Picture of v0.3.0](/README_assets/v0.3.0.png)
 
 ### v0.2.0 - 10.01.25
 * New Features:
@@ -39,6 +49,6 @@ It is a React-based dashboard website to display the temperature, humidity and o
   * See the temperature of the main weather Station
   * refreshes the data every 10 minutes
 * Known bugs:
-  * After 3 hours a new token is not recived and nothing works till cookies are removed
+  * After 3 hours a new token is not recived and nothing works till localstorage is removed
 
 ![Picture of v0.1.0](/README_assets/v0.1.0.png)

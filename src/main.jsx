@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 
 import './style.css';
 
-import App from './App';
+import App from './router';
 
 // npm run dev
 // npx eslint .
