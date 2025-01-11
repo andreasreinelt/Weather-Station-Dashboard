@@ -6,6 +6,7 @@ import './style.css';
 import App from './App';
 
 // npm run dev
+// npx eslint .
 
 // .jsx: Verwenden, wenn JSX-Syntax enthalten ist (Standard in React-Projekten).
 // .js: Verwenden für reines JavaScript

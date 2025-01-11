@@ -1,54 +1,71 @@
-import React, { useEffect, useState } from 'react';
-import { getTemperature, refreshAccessTokenIfNeeded } from './netatmoService.js';
+import React, { useState, useEffect } from 'react';
+import { getStationData } from './netatmoService.js';
 
 const WeatherDashboard = ({ tokenData }) => {
-  const [temperature, setTemperature] = useState(null);
+  const [stationData, setStationData] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let intervalId;
 
-    const fetchTemperature = async () => {
+    const fetchData = async () => {
       try {
-        // ensure token is valid and refresh if needed
-        const validTokenData = await refreshAccessTokenIfNeeded(tokenData);
-        const temp = await getTemperature(validTokenData.access_token);
-        setTemperature(temp);
-        setLastUpdated(new Date()); // update the last updated time
+        console.log('Fetching station data...');
+        const data = await getStationData(tokenData);
+        setStationData(data);
+        setLastUpdated(new Date()); // Update last updated time
       } catch (err) {
-        console.log('Error fetching temperature:', err.message);
-        setError('Error fetching temperature');
+        console.error('Error fetching station data:', err.message);
+
+        if (err.message.includes('Session expired')) {
+          console.log('Redirecting to login page...');
+          setError('Your session has expired. Please log in again.');
+          localStorage.removeItem('tokenData');
+          window.location.href = '/login';
+        } else {
+          setError('Error fetching station data');
+        }
       }
     };
 
-    if (tokenData) {
-      fetchTemperature(); // fetch temperature initially
-      intervalId = setInterval(fetchTemperature, 10 * 60 * 1000); // update site and temperature every 10 minutes
-    }
+    fetchData(); // Initial fetch
 
-    return () => clearInterval(intervalId); // cleanup interval on component unmount
+    // Set interval to refresh data every 10 minutes
+    intervalId = setInterval(fetchData, 10 * 60 * 1000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, [tokenData]);
 
   function prettifyDate(date) {
-    if (!date) return '';
-    return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
+    const timestamp = date ? new Date(date) : new Date();
+    return timestamp.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  function getTrendSymbol(trend) {
+    return trend === 'up' ? '▲' : trend === 'down' ? '▼' : trend === 'stable' ? '▬' : '';
+  }
 
   if (error) {
     return <div>{error}</div>;
   }
 
-  if (temperature === null) {
-    return <div>Loading temperature...</div>;
+  if (!stationData) {
+    return <div>Loading station data...</div>;
   }
+
+  const dashboard = stationData.dashboard_data;
 
   return (
     <div>
-      <h2>Current Temperature:</h2>
-      <p>{temperature} °C</p>
-
-      {lastUpdated && ( <p>Last updated at: {prettifyDate(lastUpdated)}</p> )}
+      <h2>Weather Station Dashboard</h2>
+      <p>Temperature: {dashboard.Temperature} °C {getTrendSymbol(dashboard.temp_trend)}</p>
+      <p>Air Pressure: {dashboard.Pressure} hPa {getTrendSymbol(dashboard.pressure_trend)}</p>
+      <p>Humidity: {dashboard.Humidity} %</p>
+      <p>CO2 Level: {dashboard.CO2} ppm</p>
+      <p>Noise: {dashboard.Noise} dB</p>
+      {lastUpdated && <p>Last updated at: {prettifyDate(lastUpdated)}</p>}
     </div>
   );
 };

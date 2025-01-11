@@ -1,5 +1,10 @@
 import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from './config.js';
 
+function prettifyDate(date) {
+  const timestamp = date ? new Date(date) : new Date();
+  return timestamp.toLocaleTimeString('de-DE', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
 // exchange authorization code for an access token
 export async function exchangeCodeForToken(code) {
   const response = await fetch('https://api.netatmo.com/oauth2/token', {
@@ -16,11 +21,12 @@ export async function exchangeCodeForToken(code) {
 
   if (!response.ok) {
     const errorDetails = await response.text();
-    console.log('Error during getting the token:', errorDetails);
+    console.error('Error during getting the token:', errorDetails);
     throw new Error('Error during getting the token');
   }
 
   const data = await response.json();
+  console.log('Token data after exchange:', data);
   return {
     ...data,
     expiryTime: Date.now() + data.expires_in * 1000, // calculate token expiry time
@@ -42,11 +48,12 @@ export async function refreshAccessToken(refreshToken) {
 
   if (!response.ok) {
     const errorDetails = await response.text();
-    console.log('Error during token refresh:', errorDetails);
+    console.error('Error during token refresh:', errorDetails);
     throw new Error('Error during token refresh');
   }
 
   const data = await response.json();
+  console.log('Token data after refresh:', data);
   return {
     ...data,
     expiryTime: Date.now() + data.expires_in * 1000, // update expiry time
@@ -59,53 +66,50 @@ export async function refreshAccessTokenIfNeeded(tokenData) {
     throw new Error('no token data available');
   }
 
-  const { refresh_token, expiryTime } = tokenData; // remove access_token as it's unused
+  const { refresh_token, expiryTime } = tokenData;
 
-  // check if the token is still valid
+  console.log('Current token expiry time:', prettifyDate(expiryTime), 'Current time:', prettifyDate(Date.now()));
+
   if (Date.now() < expiryTime) {
-    return tokenData; // return current token if still valid
+    console.log('Token is still valid');
+    return tokenData;
   }
 
   console.log('Access token expired, refreshing...');
-  const refreshedData = await refreshAccessToken(refresh_token);
-  return {
-    ...refreshedData,
-    expiryTime: Date.now() + refreshedData.expires_in * 1000, // update expiry time
-  };
+  try {
+    const refreshedData = await refreshAccessToken(refresh_token);
+    console.log('Refreshed token data:', refreshedData);
+
+    return {
+      ...refreshedData,
+      expiryTime: Date.now() + (refreshedData.expires_in * 1000),
+    };
+  } catch (error) {
+    if (error.message.includes('invalid_grant')) {
+      console.error('Refresh token is invalid. User must log in again');
+      throw new Error('Refresh token is invalid. User must log in again');
+    }
+    throw error;
+  }
 }
 
-// fetch temperature from the Netatmo weather station
-export async function getTemperature(accessToken) {
+// fetch station data from the Netatmo weather station
+export async function getStationData(tokenData) {
+  const validTokenData = await refreshAccessTokenIfNeeded(tokenData);
   const response = await fetch('https://api.netatmo.com/api/getstationsdata', {
     method: 'GET',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      Authorization: `Bearer ${validTokenData.access_token}`,
     },
   });
 
   if (!response.ok) {
     const errorDetails = await response.text();
-    console.log('Error fetching temperature data:', errorDetails);
-    throw new Error('Error fetching temperature data');
+    console.error('Error fetching station data:', errorDetails);
+    throw new Error('Error fetching station data');
   }
 
   const data = await response.json();
-  const mainDevice = data.body.devices[0];
-
-  /*  console.log(mainDevice.dashboard_data); -> data I can get an display
-  AbsolutePressure: 1003.1
-CO2: 1156
-Humidity: 47
-Noise: 31
-Pressure: 1008.9
-Temperature: 21.6
-date_max_temp: 1736416732
-date_min_temp: 1736422477
-max_temp: 22.2
-min_temp: 18
-pressure_trend: "up"
-temp_trend: "stable"
-time_utc: 1736450908 */
-
-  return mainDevice.dashboard_data.Temperature;
+  console.log('Fetched station data:', data.body.devices[0]);
+  return data.body.devices[0]; // return the main device
 }
