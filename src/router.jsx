@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-import LoginButton from './Login';
 import Callback from './Callback';
 import Dashboard from './Dashboard';
 
@@ -23,29 +22,12 @@ function App() {
 
     if (path === '/callback') {
       // if logged in, redirect to dashboard
-      if (tokenData) {
-        window.location.href = '/dashboard';
-        return null;
-      }
+      
       return <Callback onToken={(data) => setTokenData(data)} />;
     }
 
-    if (path === '/dashboard') {
-      if (!tokenData) {
-        // if not logged in, redirect to root
-        window.location.href = '/';
-        return null;
-      }
-      return <Dashboard tokenData={tokenData} />;
-    }
+    return <Dashboard tokenData={tokenData} />;
 
-    // default route to root
-    if (tokenData) {
-      window.location.href = '/dashboard'; // redirect to dashboard if logged in
-      return null;
-    }
-
-    return <LoginButton />;
   };
 
   return <div>{renderContent()}</div>;

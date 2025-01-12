@@ -12,21 +12,6 @@
   text-align: center;
 }
 
-.grid-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.grid-item {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
 .value-row {
   display: flex;
   align-items: center;
@@ -65,4 +50,42 @@
 .loading {
   font-size: 2rem;
   color: gray;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.grid-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  cursor: grab;
+  user-select: none;
+  border: 1px dashed transparent;
+  margin: 0;
+  text-align: center;
+}
+
+.grid-item:active {
+  cursor: grabbing;
+}
+
+.grid-item:hover {
+  border: 1px dashed gray;
+}
+
+.drag-handle {
+  cursor: grab;
+}
+
+.react-grid-placeholder {
+  background-color: lightgray !important;
+  opacity: 0.6;
 }

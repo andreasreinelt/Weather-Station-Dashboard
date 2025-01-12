@@ -4,5 +4,3 @@
 
 export const CLIENT_ID = 'your_client_id_here';
 export const CLIENT_SECRET = 'your_client_secret_here';
-
-export const REDIRECT_URI = `${window.location.origin}/callback`;

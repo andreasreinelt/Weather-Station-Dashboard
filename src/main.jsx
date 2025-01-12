@@ -8,8 +8,8 @@ import App from './router';
 // npm run dev
 // npx eslint .
 
-// .jsx: Verwenden, wenn JSX-Syntax enthalten ist (Standard in React-Projekten).
-// .js: Verwenden für reines JavaScript
+// .jsx: Use this when the file contains JSX syntax (standard in React projects)
+// .js: Use this for plain JavaScript
 
 // got confused by create-react-app and error messages, now using vite
 

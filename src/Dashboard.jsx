@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+
 import { getStationData } from './netatmoService.js';
-import { prettifyDate, getTrendSymbol } from './helpers.js';
+import { CLIENT_ID, } from './config.js';
+import * as helpers from './helpers.js';
+
+import GridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
 
 const Dashboard = ({ tokenData }) => {
   const [stationData, setStationData] = useState(null);
@@ -8,18 +13,45 @@ const Dashboard = ({ tokenData }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [error, setError] = useState(null);
 
-  // fetch station data
+  const [layout, setLayout] = useState(() => {
+    // loads dashboardLayout or uses default settings
+    const savedLayout = localStorage.getItem('dashboardLayout');
+    return savedLayout
+      ? JSON.parse(savedLayout)
+      : [
+        { i: 'login', x: 0, y: 0, w: 1, h: 1, static: true },
+        { i: 'error', x: 0, y: 1, w: 1, h: 1, static: true },
+        { i: 'loading', x: 0, y: 2, w: 1, h: 1, static: true },
+        { i: 'temperature', x: 0, y: 1, w: 1, h: 1 },
+        { i: 'humidity', x: 1, y: 2, w: 1, h: 1 },
+        { i: 'time', x: 2, y: 2, w: 1, h: 1 },
+        { i: 'pressure', x: 0, y: 3, w: 1, h: 1 },
+        { i: 'co2', x: 1, y: 3, w: 1, h: 1 },
+        { i: 'noise', x: 2, y: 3, w: 1, h: 1 },
+      ];
+  });
+
+  // Save Layout if something changed
+  const handleLayoutChange = (newLayout) => {
+    setLayout(newLayout);
+    localStorage.setItem('dashboardLayout', JSON.stringify(newLayout));
+  };
+
   useEffect(() => {
+    if (!tokenData) return;
     let intervalId;
 
     const fetchData = async () => {
       try {
         console.log('Fetching station data...');
+        // simulate error: uncomment next line
+        // throw new Error('Test error: Unable to fetch data');
         const data = await getStationData(tokenData);
+        // simulate Loading error: comment next line
         setStationData(data);
         setLastUpdated(new Date());
       } catch (err) {
-        console.error('Error fetching station data:', err.message);
+        console.error('Station Data Error:', err.message);
 
         if (err.message.includes('Session expired')) {
           console.log('Redirecting to login page...');
@@ -27,7 +59,7 @@ const Dashboard = ({ tokenData }) => {
           localStorage.removeItem('tokenData');
           window.location.href = '/login';
         } else {
-          setError('Error fetching station data');
+          setError('No Station Data');
         }
       }
     };
@@ -39,83 +71,118 @@ const Dashboard = ({ tokenData }) => {
     return () => clearInterval(intervalId);
   }, [tokenData]);
 
-  // update the current time every minute
   useEffect(() => {
+    // to make sure the clock updates every full minute (instead of 1 minute after loading the page)
     const updateClock = () => setCurrentTime(new Date());
-  
+
     const now = new Date();
     const delay = 60000 - (now.getSeconds() * 1000 + now.getMilliseconds());
-  
+
     const timeoutId = setTimeout(() => {
       updateClock();
-      const intervalId = setInterval(updateClock, 60000); 
-  
+      const intervalId = setInterval(updateClock, 60000);
+
       return () => clearInterval(intervalId);
     }, delay);
-  
+
     return () => clearTimeout(timeoutId);
   }, []);
-  
-
-  if (error) {
-    return <div className="error">{error}</div>;
-  }
-
-  if (!stationData) {
-    return <div className="loading">Loading station data...</div>;
-  }
-
-  const dashboard = stationData.dashboard_data;
 
   return (
     <div className="dashboard-container">
-      <div className="grid-container">
+      <GridLayout
+        className="grid-container"
+        layout={layout}
+        cols={3}
+        rowHeight={150}
+        width={1200}
+        isDraggable={true}
+        isResizable={false}
+        draggableHandle=".grid-item"
+        onLayoutChange={handleLayoutChange}
+        compactType="vertical"
+      >
+        {!tokenData && (
+          <div key="login" className="grid-item">
+            <div className="value-row">
+              <span className="value">
+                <a href={`https://api.netatmo.com/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(
+                  `${window.location.origin}/callback`
+                )}&scope=read_station&state=12345`} >
+                  <button>Login with Netatmo</button>
+                </a>
+              </span>
+            </div>
+            <div className="label">Login</div>
+          </div>
+        )}
 
-        <div className="grid-item">
+        {error && (
+          <div key="error" className="grid-item">
+            <div className="value-row">
+              <span className="value">{error}</span>
+            </div>
+            <div className="label">Error</div>
+          </div>
+        )}
+        {!stationData && !error && tokenData && (
+          <div key="loading" className="grid-item">
+            <div className="value-row">
+              <span className="value">Loading...</span>
+            </div>
+            <div className="label">Please wait</div>
+          </div>
+        )}
+        <div key="temperature" className="grid-item">
           <div className="value-row">
-            <span className="value">{dashboard.Temperature} °C</span>
-            <span className="trend">{getTrendSymbol(dashboard.temp_trend)}</span>
+            <span className="value">{helpers.getValueOrPlaceholder(stationData?.dashboard_data?.Temperature, '°C')}</span>
+            <span className="trend">
+              {stationData ? helpers.getTrendSymbol(stationData.dashboard_data.temp_trend) : ''}
+            </span>
           </div>
           <div className="label">Temperature</div>
         </div>
-        <div className="grid-item">
+        <div key="humidity" className="grid-item">
           <div className="value-row">
-            <span className="value">{dashboard.Humidity} %</span>
+            <span className="value">{helpers.getValueOrPlaceholder(stationData?.dashboard_data?.Humidity, '%')}</span>
           </div>
           <div className="label">Humidity</div>
         </div>
-        <div className="grid-item">
+        <div key="time" className="grid-item">
           <div className="value-row">
-            <span className="value">{prettifyDate(currentTime, true, false, false, false)}</span>
+            <span className="value">
+              {helpers.prettifyDate(currentTime, true, false, false, false)}
+            </span>
           </div>
           <div className="label">
-            {prettifyDate(currentTime, false, false, true, true)}
+            {helpers.prettifyDate(currentTime, false, false, true, true)}
           </div>
         </div>
-
-        <div className="grid-item">
+        <div key="pressure" className="grid-item">
           <div className="value-row">
-            <span className="value">{dashboard.Pressure} hPa</span>
-            <span className="trend">{getTrendSymbol(dashboard.pressure_trend)}</span>
+            <span className="value">{helpers.getValueOrPlaceholder(stationData?.dashboard_data?.Pressure, 'hPa')}</span>
+            <span className="trend">
+              {stationData ? helpers.getTrendSymbol(stationData.dashboard_data.pressure_trend) : ''}
+            </span>
           </div>
           <div className="label">Air Pressure</div>
         </div>
-        <div className="grid-item">
+        <div key="co2" className="grid-item">
           <div className="value-row">
-            <span className="value">{dashboard.CO2} ppm</span>
+            <span className="value">{helpers.getValueOrPlaceholder(stationData?.dashboard_data?.CO2, 'ppm')}</span>
           </div>
           <div className="label">CO2 Level</div>
         </div>
-        <div className="grid-item">
+        <div key="noise" className="grid-item">
           <div className="value-row">
-            <span className="value">{dashboard.Noise} dB</span>
+            <span className="value">{helpers.getValueOrPlaceholder(stationData?.dashboard_data?.Noise, 'dB')}</span>
           </div>
           <div className="label">Noise Level</div>
         </div>
-      </div>
+      </GridLayout>
       {lastUpdated && (
         <div className="last-updated">
-          Last updated at: {prettifyDate(lastUpdated, true, true, false, false)}
+          Last updated at: {helpers.prettifyDate(lastUpdated, true, true, false, false)}
         </div>
       )}
     </div>

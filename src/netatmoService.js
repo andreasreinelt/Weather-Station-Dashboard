@@ -1,4 +1,4 @@
-import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI } from './config.js';
+import { CLIENT_ID, CLIENT_SECRET, } from './config.js';
 import * as helpers from './helpers.js';
 
 // Exchange authorization code for an access token
@@ -11,7 +11,7 @@ export async function exchangeCodeForToken(code) {
       client_id: CLIENT_ID,
       client_secret: CLIENT_SECRET,
       code: code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: `${window.location.origin}/callback`,
     }),
   });
 
