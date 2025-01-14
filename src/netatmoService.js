@@ -36,7 +36,7 @@ export async function refreshAccessToken(refreshToken) {
 
   const response = await fetch('https://api.netatmo.com/oauth2/token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded', },
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', },
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
@@ -54,7 +54,7 @@ export async function refreshAccessToken(refreshToken) {
     if (errorDetails.includes('invalid_grant')) {
       console.error('refresh_token is invalid. redirecting to login page...');
       localStorage.removeItem('tokenData'); // remove invalid token
-      window.location.href = '/login'; // redirect to login
+      window.location.href = '/'; // redirect to login
       return;
     }
 
@@ -68,7 +68,7 @@ export async function refreshAccessToken(refreshToken) {
   if (data.refresh_token && data.refresh_token !== refreshToken) {
     console.log('Netatmo returned a new refresh token:', data.refresh_token);
   } else {
-    console.log('Netatmo returned the same refresh token.');
+    console.log('Netatmo returned the same refresh token');
   }
 
   const updatedTokenData = {

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 import { getStationData } from './netatmoService.js';
 import { CLIENT_ID, } from './config.js';
@@ -12,6 +14,7 @@ const Dashboard = ({ tokenData }) => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const [layout, setLayout] = useState(() => {
     // loads dashboardLayout or uses default settings
@@ -57,7 +60,7 @@ const Dashboard = ({ tokenData }) => {
           console.log('Redirecting to login page...');
           setError('Your session has expired. Please log in again.');
           localStorage.removeItem('tokenData');
-          window.location.href = '/login';
+          navigate('/');
         } else {
           setError('No Station Data');
         }
@@ -187,6 +190,10 @@ const Dashboard = ({ tokenData }) => {
       )}
     </div>
   );
+};
+
+Dashboard.propTypes = {
+  tokenData: PropTypes.func.isRequired,
 };
 
 export default Dashboard;

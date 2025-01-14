@@ -13,13 +13,20 @@ It is a React-based dashboard website to display the temperature, humidity and o
 * Start the development server with npm run dev
 
 ## Made with
-* Vite and React (with react-dom/client and react-grid-layout)
-* Google Search and a little bit create-react-app in the beginning
+* Vite and React (with react-dom/client, react-router-dom and react-grid-layout)
+* Google Search and a little bit create-react-app in the beginning/Vite afterwards
 * Netatmo API https://dev.netatmo.com/apidocumentation/general
 * OAuth2 to authenticate with the Netatmo API and to get Data
 * Code I created while doing the BootCamp (prettifyDate)
 
 ## Changelog
+
+### v0.6.0 - 13.01.25
+* Improved some internal handling and things in the background. Everything now runs at the root instead of /dashboard, because there is no /login route anymore (login now in dashboard)
+* But I kept the /callback route for handeling the callback after authentication
+* Routes now use react-router-dom instead of const path = window.location.pathname;
+
+![Picture of v0.6.0](/README_assets/v0.6.0.png)
 
 ### v0.5.0 - 12.01.25
 * New Features:

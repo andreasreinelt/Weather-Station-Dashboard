@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 
-import Callback from './Callback';
-import Dashboard from './Dashboard';
+import Callback from './Callback.jsx';
+import Dashboard from './Dashboard.jsx';
 
 function App() {
   const [tokenData, setTokenData] = useState(() => {
@@ -17,20 +18,23 @@ function App() {
     }
   }, [tokenData]);
 
-  const renderContent = () => {
-    const path = window.location.pathname;
+  // router configuration
+  const router = createBrowserRouter([
+    {
+      path: '/',
+      element: <Dashboard tokenData={tokenData} />,
+    },
+    {
+      path: '/callback',
+      element: <Callback onToken={data => setTokenData(data)} />,
+    },
+    {
+      path: '*',
+      element: <Navigate to="/" replace />,
+    },
+  ]);
 
-    if (path === '/callback') {
-      // if logged in, redirect to dashboard
-      
-      return <Callback onToken={(data) => setTokenData(data)} />;
-    }
-
-    return <Dashboard tokenData={tokenData} />;
-
-  };
-
-  return <div>{renderContent()}</div>;
+  return <RouterProvider router={router} />;
 }
 
 export default App;
