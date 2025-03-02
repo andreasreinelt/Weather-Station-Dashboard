@@ -8,6 +8,7 @@ import * as helpers from './helpers.js';
 
 import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 
 const Dashboard = ({ tokenData }) => {
   const [stationData, setStationData] = useState(null);

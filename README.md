@@ -1,9 +1,6 @@
 # Weather station Dashboard with Netatmo
 
-This is my Senior Solo project at Codeworks.
-It is a React-based dashboard website to display the temperature, humidity and other values of a Netatmo smart weather station
-
-**⚠️ Everything is not finished and not ready to be used ⚠️**
+This is a React-based dashboard website to display the temperature, humidity and other values of a Netatmo smart weather station
 
 ## Configuration
 
